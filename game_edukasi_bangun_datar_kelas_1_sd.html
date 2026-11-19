@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Bangun Datar - Kelas 1 SD</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka untuk tipografi ceria dan ramah anak -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #38BDF8 0%, #818CF8 50%, #F472B6 100%);
+            min-height: 100vh;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        /* Gaya Tombol 3D ala Game Anak */
+        .btn-3d {
+            transition: transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.1s ease;
+            box-shadow: 0 8px 0 rgba(0, 0, 0, 0.2);
+        }
+        .btn-3d:active:not(:disabled) {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        /* Animasi Membal (Bounce) */
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.08); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* Animasi Goyang Lembut saat Jawaban Salah */
+        @keyframes gentleShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-6px); }
+        }
+        .animate-shake {
+            animation: gentleShake 0.4s ease-in-out;
+        }
+
+        /* Animasi Mengambang untuk Karakter/Objek */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Canvas Konfeti di Lapisan Atas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-3 sm:p-6">
+
+    <!-- Canvas untuk efek konfeti -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Kontainer Utama Game -->
+    <main id="app-container" class="w-full max-w-2xl bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-2xl border-8 border-yellow-300 p-5 sm:p-8 relative overflow-hidden">
+        
+        <!-- ========================================== -->
+        <!-- LAYAR 1: LAYAR MULAI (START SCREEN)        -->
+        <!-- ========================================== -->
+        <section id="start-screen" class="flex flex-col items-center text-center py-4 sm:py-6 animate-pop">
+            <!-- Ilustrasi 4 Bangun Datar Ceria -->
+            <div class="grid grid-cols-4 gap-3 sm:gap-5 mb-6 w-full max-w-md animate-float">
+                <!-- Persegi -->
+                <svg viewBox="0 0 100 100" class="w-full h-auto drop-shadow-md">
+                    <rect x="12" y="12" width="76" height="76" rx="14" fill="#EF4444" stroke="#B91C1C" stroke-width="5"/>
+                    <circle cx="38" cy="45" r="5" fill="#1F2937"/><circle cx="62" cy="45" r="5" fill="#1F2937"/>
+                    <path d="M 38 62 Q 50 72 62 62" stroke="#1F2937" stroke-width="4" fill="none" stroke-linecap="round"/>
+                </svg>
+                <!-- Lingkaran -->
+                <svg viewBox="0 0 100 100" class="w-full h-auto drop-shadow-md">
+                    <circle cx="50" cy="50" r="40" fill="#F59E0B" stroke="#B45309" stroke-width="5"/>
+                    <circle cx="38" cy="45" r="5" fill="#1F2937"/><circle cx="62" cy="45" r="5" fill="#1F2937"/>
+                    <path d="M 38 62 Q 50 72 62 62" stroke="#1F2937" stroke-width="4" fill="none" stroke-linecap="round"/>
+                </svg>
+                <!-- Segitiga -->
+                <svg viewBox="0 0 100 100" class="w-full h-auto drop-shadow-md">
+                    <polygon points="50,12 90,85 10,85" fill="#10B981" stroke="#047857" stroke-width="5" stroke-linejoin="round"/>
+                    <circle cx="40" cy="56" r="4.5" fill="#1F2937"/><circle cx="60" cy="56" r="4.5" fill="#1F2937"/>
+                    <path d="M 42 68 Q 50 76 58 68" stroke="#1F2937" stroke-width="4" fill="none" stroke-linecap="round"/>
+                </svg>
+                <!-- Persegi Panjang -->
+                <svg viewBox="0 0 100 100" class="w-full h-auto drop-shadow-md">
+                    <rect x="6" y="24" width="88" height="52" rx="12" fill="#3B82F6" stroke="#1D4ED8" stroke-width="5"/>
+                    <circle cx="38" cy="46" r="5" fill="#1F2937"/><circle cx="62" cy="46" r="5" fill="#1F2937"/>
+                    <path d="M 40 60 Q 50 68 60 60" stroke="#1F2937" stroke-width="4" fill="none" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <span class="bg-yellow-200 text-yellow-800 font-bold px-4 py-1.5 rounded-full text-sm sm:text-base mb-3">
+                🌟 Kelas 1 SD 🌟
+            </span>
+            <h1 class="text-3xl sm:text-5xl font-bold text-indigo-700 leading-tight mb-3">
+                Ayo Belajar<br><span class="text-pink-500">Bangun Datar!</span>
+            </h1>
+            <p class="text-gray-600 text-lg sm:text-xl mb-8 max-w-md font-medium">
+                Kenali bentuk <span class="text-red-500 font-bold">Persegi</span>, <span class="text-blue-500 font-bold">Persegi Panjang</span>, <span class="text-emerald-500 font-bold">Segitiga</span>, dan <span class="text-amber-500 font-bold">Lingkaran</span>!
+            </p>
+
+            <button onclick="startGame()" class="btn-3d bg-emerald-500 hover:bg-emerald-400 text-white text-2xl sm:text-3xl font-bold py-4 px-10 rounded-full border-4 border-emerald-600 flex items-center gap-3 cursor-pointer">
+                <span>▶️</span> MULAI MAIN
+            </button>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- LAYAR 2: LAYAR PERMAINAN (GAMEPLAY SCREEN) -->
+        <!-- ========================================== -->
+        <section id="game-screen" class="hidden flex-col items-center">
+            
+            <!-- Bar Progres 10 Bintang -->
+            <div class="w-full bg-indigo-50 rounded-2xl p-3 mb-4 border-2 border-indigo-100 flex flex-col items-center">
+                <div class="flex justify-between w-full text-xs sm:text-sm font-bold text-indigo-600 mb-1.5 px-1">
+                    <span>SOAL <span id="question-number">1</span> DARI 10</span>
+                    <span>⭐ <span id="star-count">0</span> BINTANG</span>
+                </div>
+                <div id="stars-bar" class="grid grid-cols-10 gap-1 sm:gap-2 w-full">
+                    <!-- 10 Bintang akan diisi oleh JavaScript -->
+                </div>
+            </div>
+
+            <!-- Instruksi Soal & Tombol Ulangi Suara -->
+            <div class="w-full flex items-center justify-between gap-3 bg-yellow-100 border-4 border-yellow-300 rounded-3xl p-4 mb-5">
+                <h2 id="question-text" class="text-xl sm:text-2xl font-bold text-gray-800 leading-snug flex-1">
+                    Bentuk apakah ini?
+                </h2>
+                <button onclick="speakCurrentQuestion()" aria-label="Ulangi Suara" title="Dengarkan Suara" class="btn-3d bg-amber-400 hover:bg-amber-300 text-amber-950 p-3.5 sm:p-4 rounded-2xl border-2 border-amber-500 flex-shrink-0 cursor-pointer">
+                    <!-- Ikon Speaker SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 001.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06zM18.584 5.106a.75.75 0 011.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 11-1.06-1.06 8.25 8.25 0 000-11.668.75.75 0 010-1.06z"/>
+                        <path d="M15.932 7.757a.75.75 0 011.061 0 6 6 0 010 8.486.75.75 0 01-1.06-1.061 4.5 4.5 0 000-6.364.75.75 0 010-1.06z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Area Visual Gambar Soal (Bangun Datar / Benda Sehari-hari) -->
+            <div id="visual-container" class="w-full h-48 sm:h-56 bg-sky-50 border-4 border-sky-200 rounded-3xl flex flex-col items-center justify-center p-4 mb-5 relative overflow-hidden">
+                <div id="shape-illustration" class="w-36 h-36 sm:w-44 sm:h-44 flex items-center justify-center animate-pop">
+                    <!-- SVG Ilustrasi Soal dirender di sini -->
+                </div>
+                <span id="item-label" class="mt-1 text-base sm:text-lg font-bold text-sky-800 bg-white/90 px-4 py-0.5 rounded-full shadow-sm hidden">
+                    <!-- Nama benda jika tipe soal 2 -->
+                </span>
+            </div>
+
+            <!-- Pesan Umpan Balik (Feedback Banner) -->
+            <div id="feedback-box" class="h-12 mb-3 flex items-center justify-center w-full">
+                <p id="feedback-text" class="text-xl sm:text-2xl font-bold text-center transition-all duration-200 opacity-0">
+                    Hebat!
+                </p>
+            </div>
+
+            <!-- 3 Tombol Pilihan Jawaban Besar -->
+            <div id="options-container" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full">
+                <!-- Tombol jawaban diisi oleh JavaScript -->
+            </div>
+
+        </section>
+
+        <!-- ========================================== -->
+        <!-- LAYAR 3: LAYAR PERAYAAN (VICTORY SCREEN)   -->
+        <!-- ========================================== -->
+        <section id="victory-screen" class="hidden flex-col items-center text-center py-6 animate-pop">
+            <div class="text-6xl sm:text-7xl mb-3 animate-bounce">🏆</div>
+            <h2 class="text-3xl sm:text-5xl font-bold text-indigo-700 mb-2">
+                Luar Biasa!
+            </h2>
+            <p class="text-lg sm:text-2xl text-gray-600 font-medium mb-6">
+                Kamu berhasil menyelesaikan semua soal!
+            </p>
+
+            <!-- Tampilan Bintang yang Didapat -->
+            <div class="bg-yellow-100 border-4 border-yellow-300 rounded-3xl p-5 mb-8 w-full max-w-md">
+                <p class="text-amber-800 font-bold text-lg mb-2">Bintang Kamu:</p>
+                <div id="victory-stars" class="flex flex-wrap justify-center gap-2 text-3xl sm:text-4xl">
+                    <!-- 10 Bintang Emas -->
+                </div>
+                <p class="text-2xl font-bold text-amber-600 mt-3">10 / 10 Bintang!</p>
+            </div>
+
+            <button onclick="startGame()" class="btn-3d bg-pink-500 hover:bg-pink-400 text-white text-2xl sm:text-3xl font-bold py-4 px-10 rounded-full border-4 border-pink-600 flex items-center gap-3 cursor-pointer">
+                <span>🔄</span> MAIN LAGI
+            </button>
+        </section>
+
+    </main>
+
+    <script>
+        /**
+         * =================================================================
+         * 1. BANK DATA MATERI & SOAL (4 BANGUN DATAR DASAR KELAS 1 SD)
+         * =================================================================
+         */
+        const SHAPES = ['Persegi', 'Persegi Panjang', 'Segitiga', 'Lingkaran'];
+
+        // Bank Soal Tipe 1: Tebak Bentuk Bangun Datar Murni
+        const TYPE1_QUESTIONS = [
+            {
+                type: 'shape',
+                answer: 'Persegi',
+                questionText: 'Bentuk bangun datar apakah ini?',
+                voiceText: 'Bentuk bangun datar apakah ini?',
+                label: '',
+                svg: `<svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-lg">
+                        <rect x="18" y="18" width="84" height="84" rx="12" fill="#EF4444" stroke="#991B1B" stroke-width="6"/>
+                        <circle cx="45" cy="52" r="5" fill="#1F2937"/><circle cx="75" cy="52" r="5" fill="#1F2937"/>
+                        <path d="M 46 72 Q 60 84 74 72" stroke="#1F2937" stroke-width="5" fill="none" stroke-linecap="round"/>
+                      </svg>`
+            },
+            {
+                type: 'shape',
+                answer: 'Persegi Panjang',
+                questionText: 'Bentuk bangun datar apakah ini?',
+                voiceText: 'Bentuk bangun datar apakah ini?',
+                label: '',
+                svg: `<svg viewBox="0 0 140 100" class="w-full h-full drop-shadow-lg">
+                        <rect x="10" y="20" width="120" height="60" rx="12" fill="#3B82F6" stroke="#1E40AF" stroke-width="6"/>
+                        <circle cx="52" cy="45" r="5" fill="#1F2937"/><circle cx="88" cy="45" r="5" fill="#1F2937"/>
+                        <path d="M 55 62 Q 70 72 85 62" stroke="#1F2937" stroke-width="5" fill="none" stroke-linecap="round"/>
+                      </svg>`
+            },
+            {
+                type: 'shape',
+                answer: 'Segitiga',
+                questionText: 'Bentuk bangun datar apakah ini?',
+                voiceText: 'Bentuk bangun datar apakah ini?',
+                label: '',
+                svg: `<svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-lg">
+                        <polygon points="60,14 108,102 12,102" fill="#10B981" stroke="#065F46" stroke-width="6" stroke-linejoin="round"/>
+                        <circle cx="48" cy="68" r="5" fill="#1F2937"/><circle cx="72" cy="68" r="5" fill="#1F2937"/>
+                        <path d="M 48 83 Q 60 93 72 83" stroke="#1F2937" stroke-width="5" fill="none" stroke-linecap="round"/>
+                      </svg>`
+            },
+            {
+                type: 'shape',
+                answer: 'Lingkaran',
+                questionText: 'Bentuk bangun datar apakah ini?',
+                voiceText: 'Bentuk bangun datar apakah ini?',
+                label: '',
+                svg: `<svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-lg">
+                        <circle cx="60" cy="60" r="46" fill="#F59E0B" stroke="#92400E" stroke-width="6"/>
+                        <circle cx="45" cy="52" r="5" fill="#1F2937"/><circle cx="75" cy="52" r="5" fill="#1F2937"/>
+                        <path d="M 46 72 Q 60 84 74 72" stroke="#1F2937" stroke-width="5" fill="none" stroke-linecap="round"/>
+                      </svg>`
+            }
+        ];
+
+        // Bank Soal Tipe 2: Cari Benda di Sekitar (Ilustrasi Benda Sehari-hari)
+        const TYPE2_QUESTIONS = [
+            {
+                type: 'object',
+                answer: 'Lingkaran',
+                questionText: 'Jam dinding ini berbentuk apa?',
+                voiceText: 'Jam dinding ini berbentuk apa?',
+                label: 'Jam Dinding',
+                svg: `<svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-md">
+                        <circle cx="60" cy="60" r="48" fill="#EF4444" stroke="#991B1B" stroke-width="5"/>
+                        <circle cx="60" cy="60" r="38" fill="#FFFFFF"/>
+                        <circle cx="60" cy="28" r="3" fill="#374151"/><circle cx="60" cy="92" r="3" fill="#374151"/>
+                        <circle cx="28" cy="60" r="3" fill="#374151"/><circle cx="92" cy="60" r="3" fill="#374151"/>
+                        <line x1="60" y1="60" x2="60" y2="36" stroke="#1F2937" stroke-width="5" stroke-linecap="round"/>
+                        <line x1="60" y1="60" x2="78" y2="60" stroke="#EF4444" stroke-width="4" stroke-linecap="round"/>
+                        <circle cx="60" cy="60" r="4" fill="#1F2937"/>
+                      </svg>`
+            },
+            {
+                type: 'object',
+                answer: 'Lingkaran',
+                questionText: 'Roda sepeda ini berbentuk apa?',
+                voiceText: 'Roda sepeda ini berbentuk apa?',
+                label: 'Roda Sepeda',
+                svg: `<svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-md">
+                        <circle cx="60" cy="60" r="46" fill="none" stroke="#1F2937" stroke-width="11"/>
+                        <circle cx="60" cy="60" r="36" fill="none" stroke="#9CA3AF" stroke-width="3"/>
+                        <line x1="60" y1="24" x2="60" y2="96" stroke="#6B7280" stroke-width="3"/>
+                        <line x1="24" y1="60" x2="96" y2="60" stroke="#6B7280" stroke-width="3"/>
+                        <line x1="35" y1="35" x2="85" y2="85" stroke="#6B7280" stroke-width="3"/>
+                        <line x1="85" y1="35" x2="35" y2="85" stroke="#6B7280" stroke-width="3"/>
+                        <circle cx="60" cy="60" r="8" fill="#3B82F6"/>
+                      </svg>`
+            },
+            {
+                type: 'object',
+                answer: 'Persegi Panjang',
+                questionText: 'Papan tulis ini berbentuk apa?',
+                voiceText: 'Papan tulis ini berbentuk apa?',
+                label: 'Papan Tulis',
+                svg: `<svg viewBox="0 0 140 100" class="w-full h-full drop-shadow-md">
+                        <rect x="8" y="16" width="124" height="68" rx="6" fill="#B45309"/>
+                        <rect x="15" y="23" width="110" height="54" fill="#065F46"/>
+                        <text x="32" y="55" fill="#FFFFFF" font-size="16" font-family="sans-serif" font-weight="bold">1 + 1 = 2</text>
+                        <rect x="85" y="71" width="22" height="5" fill="#FDE047"/>
+                      </svg>`
+            },
+            {
+                type: 'object',
+                answer: 'Persegi Panjang',
+                questionText: 'Buku tulis ini berbentuk apa?',
+                voiceText: 'Buku tulis ini berbentuk apa?',
+                label: 'Buku Tulis',
+                svg: `<svg viewBox="0 0 140 100" class="w-full h-full drop-shadow-md">
+                        <rect x="14" y="18" width="112" height="64" rx="8" fill="#3B82F6" stroke="#1D4ED8" stroke-width="4"/>
+                        <rect x="14" y="18" width="16" height="64" rx="4" fill="#1E3A8A"/>
+                        <rect x="44" y="32" width="64" height="24" rx="4" fill="#FFFFFF"/>
+                        <line x1="52" y1="41" x2="100" y2="41" stroke="#93C5FD" stroke-width="3"/>
+                        <line x1="52" y1="49" x2="88" y2="49" stroke="#93C5FD" stroke-width="3"/>
+                      </svg>`
+            },
+            {
+                type: 'object',
+                answer: 'Segitiga',
+                questionText: 'Potongan pizza ini berbentuk apa?',
+                voiceText: 'Potongan pizza ini berbentuk apa?',
+                label: 'Potongan Pizza',
+                svg: `<svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-md">
+                        <polygon points="60,16 104,98 16,98" fill="#FBBF24" stroke="#D97706" stroke-width="4" stroke-linejoin="round"/>
+                        <path d="M 14 96 Q 60 106 106 96" stroke="#B45309" stroke-width="10" fill="none" stroke-linecap="round"/>
+                        <circle cx="60" cy="48" r="7" fill="#DC2626"/>
+                        <circle cx="46" cy="76" r="8" fill="#DC2626"/>
+                        <circle cx="74" cy="78" r="7" fill="#DC2626"/>
+                      </svg>`
+            },
+            {
+                type: 'object',
+                answer: 'Segitiga',
+                questionText: 'Penggaris ini berbentuk apa?',
+                voiceText: 'Penggaris ini berbentuk apa?',
+                label: 'Penggaris Segitiga',
+                svg: `<svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-md">
+                        <polygon points="22,16 104,98 22,98" fill="#34D399" stroke="#059669" stroke-width="5" stroke-linejoin="round"/>
+                        <polygon points="36,48 72,84 36,84" fill="#E0F2FE" stroke="#059669" stroke-width="3" stroke-linejoin="round"/>
+                        <line x1="22" y1="35" x2="29" y2="35" stroke="#064E3B" stroke-width="3"/>
+                        <line x1="22" y1="55" x2="29" y2="55" stroke="#064E3B" stroke-width="3"/>
+                        <line x1="22" y1="75" x2="29" y2="75" stroke="#064E3B" stroke-width="3"/>
+                      </svg>`
+            },
+            {
+                type: 'object',
+                answer: 'Persegi',
+                questionText: 'Jendela rumah ini berbentuk apa?',
+                voiceText: 'Jendela rumah ini berbentuk apa?',
+                label: 'Jendela Rumah',
+                svg: `<svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-md">
+                        <rect x="18" y="18" width="84" height="84" rx="8" fill="#F59E0B" stroke="#B45309" stroke-width="5"/>
+                        <rect x="26" y="26" width="30" height="30" fill="#BAE6FD"/>
+                        <rect x="64" y="26" width="30" height="30" fill="#BAE6FD"/>
+                        <rect x="26" y="64" width="30" height="30" fill="#BAE6FD"/>
+                        <rect x="64" y="64" width="30" height="30" fill="#BAE6FD"/>
+                      </svg>`
+            },
+            {
+                type: 'object',
+                answer: 'Persegi',
+                questionText: 'Papan catur ini berbentuk apa?',
+                voiceText: 'Papan catur ini berbentuk apa?',
+                label: 'Papan Catur',
+                svg: `<svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-md">
+                        <rect x="18" y="18" width="84" height="84" rx="6" fill="#FFFFFF" stroke="#1F2937" stroke-width="6"/>
+                        <rect x="21" y="21" width="26" height="26" fill="#1F2937"/>
+                        <rect x="73" y="21" width="26" height="26" fill="#1F2937"/>
+                        <rect x="47" y="47" width="26" height="26" fill="#1F2937"/>
+                        <rect x="21" y="73" width="26" height="26" fill="#1F2937"/>
+                        <rect x="73" y="73" width="26" height="26" fill="#1F2937"/>
+                      </svg>`
+            }
+        ];
+
+        /**
+         * =================================================================
+         * 2. STATE PERMAINAN
+         * =================================================================
+         */
+        let gameQuestions = [];
+        let currentIndex = 0;
+        let isTransitioning = false;
+        let audioCtx = null;
+
+        /**
+         * =================================================================
+         * 3. SISTEM AUDIO & SUARA (WEB AUDIO API + WEB SPEECH API)
+         * =================================================================
+         */
+        // Inisialisasi Web Audio Context saat interaksi pertama
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Efek Suara Ceria saat Jawaban Benar (Arpeggio Nada Tinggi)
+        function playSuccessSound() {
+            try {
+                initAudio();
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.08);
+                    
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.08 + 0.35);
+                    
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    
+                    osc.start(audioCtx.currentTime + idx * 0.08);
+                    osc.stop(audioCtx.currentTime + idx * 0.08 + 0.35);
+                });
+            } catch (e) {
+                console.warn('Audio tidak didukung:', e);
+            }
+        }
+
+        // Efek Suara Lembut saat Jawaban Salah (Nada Meluncur Turun Halus)
+        function playGentleTryAgainSound() {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(340, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(240, audioCtx.currentTime + 0.3);
+                
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } catch (e) {
+                console.warn('Audio tidak didukung:', e);
+            }
+        }
+
+        // Efek Suara Fanfare Kemenangan Akhir
+        function playVictorySound() {
+            try {
+                initAudio();
+                const melody = [
+                    { f: 523.25, t: 0, d: 0.15 },
+                    { f: 523.25, t: 0.16, d: 0.15 },
+                    { f: 523.25, t: 0.32, d: 0.15 },
+                    { f: 659.25, t: 0.48, d: 0.4 },
+                    { f: 587.33, t: 0.9, d: 0.2 },
+                    { f: 659.25, t: 1.12, d: 0.2 },
+                    { f: 783.99, t: 1.35, d: 0.6 }
+                ];
+                melody.forEach(n => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(n.f, audioCtx.currentTime + n.t);
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime + n.t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + n.t + n.d);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(audioCtx.currentTime + n.t);
+                    osc.stop(audioCtx.currentTime + n.t + n.d);
+                });
+            } catch (e) {}
+        }
+
+        // Narasi Suara Bahasa Indonesia (Web Speech API)
+        function speakIndonesian(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Hentikan suara sebelumnya agar tidak bertumpuk
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'id-ID';
+                utterance.rate = 0.92; // Sedikit lebih lambat agar jelas untuk anak kelas 1 SD
+                utterance.pitch = 1.15; // Nada sedikit lebih ceria
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function speakCurrentQuestion() {
+            if (gameQuestions[currentIndex]) {
+                speakIndonesian(gameQuestions[currentIndex].voiceText);
+            }
+        }
+
+        /**
+         * =================================================================
+         * 4. LOGIKA PERMAINAN & PEMBUATAN 10 SOAL ACAK
+         * =================================================================
+         */
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Menyusun 10 soal acak yang seimbang antara Tebak Bentuk dan Benda Sekitar
+        function generateTenQuestions() {
+            const q1Pool = shuffleArray(TYPE1_QUESTIONS);
+            const q2Pool = shuffleArray(TYPE2_QUESTIONS);
+            
+            // Ambil 4 soal dari Tipe 1 dan 6 soal dari Tipe 2 = 10 Soal
+            const selected = [
+                ...q1Pool.slice(0, 4),
+                ...q2Pool.slice(0, 6)
+            ];
+            return shuffleArray(selected);
+        }
+
+        // Membuat 3 pilihan tombol (1 benar + 2 pengecoh acak)
+        function generateOptions(correctAnswer) {
+            const wrongShapes = shuffleArray(SHAPES.filter(s => s !== correctAnswer));
+            const options = [correctAnswer, wrongShapes[0], wrongShapes[1]];
+            return shuffleArray(options);
+        }
+
+        // Memulai / Mengulang Permainan
+        function startGame() {
+            initAudio();
+            stopConfetti();
+            gameQuestions = generateTenQuestions();
+            currentIndex = 0;
+            isTransitioning = false;
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('victory-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('flex');
+
+            renderStarsBar();
+            loadQuestion();
+        }
+
+        // Render Bar 10 Bintang di bagian atas
+        function renderStarsBar() {
+            const starsBar = document.getElementById('stars-bar');
+            starsBar.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                const isEarned = i < currentIndex;
+                const starSpan = document.createElement('div');
+                starSpan.className = `flex items-center justify-center text-lg sm:text-2xl transition-transform duration-300 ${isEarned ? 'scale-110' : 'opacity-30 grayscale'}`;
+                starSpan.textContent = '⭐';
+                starsBar.appendChild(starSpan);
+            }
+            document.getElementById('question-number').textContent = Math.min(currentIndex + 1, 10);
+            document.getElementById('star-count').textContent = currentIndex;
+        }
+
+        // Menampilkan Soal ke Layar
+        function loadQuestion() {
+            isTransitioning = false;
+            const q = gameQuestions[currentIndex];
+
+            // Reset kotak umpan balik
+            const feedbackText = document.getElementById('feedback-text');
+            feedbackText.classList.add('opacity-0');
+
+            // Tampilkan teks soal
+            document.getElementById('question-text').textContent = q.questionText;
+
+            // Tampilkan ilustrasi SVG dengan animasi pop
+            const illustrationBox = document.getElementById('shape-illustration');
+            illustrationBox.classList.remove('animate-pop');
+            void illustrationBox.offsetWidth; // Trigger reflow untuk mengulang animasi
+            illustrationBox.innerHTML = q.svg;
+            illustrationBox.classList.add('animate-pop');
+
+            // Tampilkan label benda jika soal tipe benda sekitar
+            const itemLabel = document.getElementById('item-label');
+            if (q.label) {
+                itemLabel.textContent = q.label;
+                itemLabel.classList.remove('hidden');
+            } else {
+                itemLabel.classList.add('hidden');
+            }
+
+            // Render 3 tombol pilihan besar dengan warna ceria
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            const options = generateOptions(q.answer);
+
+            const buttonThemes = [
+                'bg-sky-500 hover:bg-sky-400 border-sky-700 text-white',
+                'bg-purple-500 hover:bg-purple-400 border-purple-700 text-white',
+                'bg-rose-500 hover:bg-rose-400 border-rose-700 text-white'
+            ];
+
+            options.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `btn-3d ${buttonThemes[idx]} text-xl sm:text-2xl font-bold py-4 sm:py-5 px-4 rounded-2xl border-4 cursor-pointer flex items-center justify-center text-center leading-tight`;
+                btn.textContent = optText;
+                btn.onclick = () => checkAnswer(optText, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            // Bacakan soal secara otomatis
+            setTimeout(() => {
+                speakCurrentQuestion();
+            }, 250);
+        }
+
+        // Memeriksa Jawaban Anak
+        function checkAnswer(selectedAnswer, btnElement) {
+            if (isTransitioning) return;
+
+            const currentQuestion = gameQuestions[currentIndex];
+            const feedbackText = document.getElementById('feedback-text');
+
+            if (selectedAnswer === currentQuestion.answer) {
+                // JAWABAN BENAR!
+                isTransitioning = true;
+                playSuccessSound();
+                triggerMiniConfetti();
+
+                // Ubah gaya tombol yang dipilih menjadi hijau cerah
+                btnElement.className = 'btn-3d bg-emerald-500 border-emerald-700 text-white text-xl sm:text-2xl font-bold py-4 sm:py-5 px-4 rounded-2xl border-4 flex items-center justify-center text-center leading-tight scale-105';
+                btnElement.innerHTML = `✅ ${selectedAnswer}`;
+
+                const praises = ['Hebat!', 'Pintar!', 'Bagus Sekali!', 'Betul!'];
+                const chosenPraise = praises[Math.floor(Math.random() * praises.length)];
+
+                feedbackText.textContent = `🌟 ${chosenPraise} Itu ${currentQuestion.answer}!`;
+                feedbackText.className = 'text-xl sm:text-2xl font-bold text-center text-emerald-600 opacity-100 animate-pop';
+
+                speakIndonesian(`${chosenPraise} Itu adalah ${currentQuestion.answer}.`);
+
+                currentIndex++;
+                renderStarsBar();
+
+                // Lanjut ke soal berikutnya atau layar kemenangan setelah 1.8 detik
+                setTimeout(() => {
+                    if (currentIndex < 10) {
+                        loadQuestion();
+                    } else {
+                        showVictoryScreen();
+                    }
+                }, 1900);
+
+            } else {
+                // JAWABAN SALAH (Respons Lembut & Coba Lagi)
+                playGentleTryAgainSound();
+
+                // Animasi goyang lembut pada tombol yang salah dan nonaktifkan sementara tombol tersebut
+                btnElement.classList.add('animate-shake', 'opacity-50');
+                btnElement.disabled = true;
+
+                feedbackText.textContent = '😊 Coba lagi ya, kamu pasti bisa!';
+                feedbackText.className = 'text-xl sm:text-2xl font-bold text-center text-amber-600 opacity-100';
+
+                speakIndonesian('Coba lagi ya!');
+            }
+        }
+
+        // Menampilkan Layar Perayaan Akhir
+        function showVictoryScreen() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('flex');
+            document.getElementById('victory-screen').classList.remove('hidden');
+            document.getElementById('victory-screen').classList.add('flex');
+
+            const victoryStars = document.getElementById('victory-stars');
+            victoryStars.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                const s = document.createElement('span');
+                s.textContent = '⭐';
+                s.style.animationDelay = `${i * 0.08}s`;
+                s.className = 'inline-block animate-bounce';
+                victoryStars.appendChild(s);
+            }
+
+            playVictorySound();
+            startContinuousConfetti();
+            speakIndonesian('Luar biasa! Kamu hebat sekali, semua bintang berhasil dikumpulkan!');
+        }
+
+        /**
+         * =================================================================
+         * 5. SISTEM ANIMASI KONFETI (CANVAS)
+         * =================================================================
+         */
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let confettiParticles = [];
+        let confettiAnimationId = null;
+        let isContinuousConfetti = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const confettiColors = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#EC4899', '#8B5CF6'];
+
+        function createParticles(count, fromTop = false) {
+            for (let i = 0; i < count; i++) {
+                confettiParticles.push({
+                    x: fromTop ? Math.random() * canvas.width : canvas.width / 2 + (Math.random() - 0.5) * 200,
+                    y: fromTop ? -20 : canvas.height / 2,
+                    vx: (Math.random() - 0.5) * (fromTop ? 4 : 14),
+                    vy: fromTop ? Math.random() * 4 + 2 : (Math.random() - 1) * 12 - 3,
+                    size: Math.random() * 10 + 6,
+                    color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+                    rotation: Math.random() * 360,
+                    vRot: (Math.random() - 0.5) * 10
+                });
+            }
+        }
+
+        function triggerMiniConfetti() {
+            createParticles(45, false);
+            if (!confettiAnimationId) animateConfetti();
+        }
+
+        function startContinuousConfetti() {
+            isContinuousConfetti = true;
+            createParticles(80, true);
+            if (!confettiAnimationId) animateConfetti();
+        }
+
+        function stopConfetti() {
+            isContinuousConfetti = false;
+            confettiParticles = [];
+            if (confettiAnimationId) {
+                cancelAnimationFrame(confettiAnimationId);
+                confettiAnimationId = null;
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function animateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (isContinuousConfetti && confettiParticles.length < 100) {
+                createParticles(4, true);
+            }
+
+            for (let i = confettiParticles.length - 1; i >= 0; i--) {
+                const p = confettiParticles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.25; // Gravitasi
+                p.rotation += p.vRot;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate((p.rotation * Math.PI) / 180);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+                ctx.restore();
+
+                if (p.y > canvas.height + 30) {
+                    confettiParticles.splice(i, 1);
+                }
+            }
+
+            if (confettiParticles.length > 0 || isContinuousConfetti) {
+                confettiAnimationId = requestAnimationFrame(animateConfetti);
+            } else {
+                confettiAnimationId = null;
+            }
+        }
+    </script>
+</body>
+</html>
